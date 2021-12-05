@@ -29,7 +29,7 @@ setup(name="tfds-fusion-360-gallery-dataset",
       long_description_content_type="text/markdown",
       keywords="ML dataset tfds",
       packages=find_packages(),
-      install_requires=[],
+      install_requires=["numpy", "tensorflow", "tensorflow_datasets", "occwl"],
       python_requires=">=3.8",
       classifiers=[
           "Development Status :: 4 - Beta",

@@ -29,28 +29,28 @@ pip install flake8 pytest-xdist pytest-benchmark pytype pylint pylint-exit absl-
 pip install -r requirements.txt
 
 # Lint with flake8.
-flake8 `find tfds-fusion-360-gallery-dataset -name '*.py' | xargs` --count --select=E9,F63,F7,F82,E225,E251 --show-source --statistics
+flake8 `find datasets -name '*.py' | xargs` --count --select=E9,F63,F7,F82,E225,E251 --show-source --statistics
 
 # Lint with pylint.
 # Fail on errors, warning, conventions and refactoring messages.
 PYLINT_ARGS="-efail -wfail -cfail -rfail"
 # Lint modules and tests separately.
-pylint --rcfile=.pylintrc `find tfds-fusion-360-gallery-dataset -name '*.py' | grep -v 'test.py' | xargs` || pylint-exit $PYLINT_ARGS $?
+pylint --rcfile=.pylintrc `find datasets -name '*.py' | grep -v 'test.py' | xargs` || pylint-exit $PYLINT_ARGS $?
 # Disable `protected-access` warnings for tests.
-pylint --rcfile=.pylintrc `find tfds-fusion-360-gallery-dataset -name '*_test.py' | xargs` -d W0212 || pylint-exit $PYLINT_ARGS $?
+pylint --rcfile=.pylintrc `find datasets -name '*_test.py' | xargs` -d W0212 || pylint-exit $PYLINT_ARGS $?
 
 # Build the package.
 python setup.py sdist
 pip wheel --verbose --no-deps --no-clean dist/tfds-fusion-360-gallery-dataset*.tar.gz
-pip install tfds-fusion-360-gallery-dataset*.whl
+pip install tfds_fusion_360_gallery_dataset*.whl
 
 # Check types with pytype.
-pytype `find tfds-fusion-360-gallery-dataset/ -name '*.py' | xargs` -k -d import-error
+pytype `find datasets/ -name '*.py' | xargs` -k -d import-error
 
 # Run tests using pytest.
 # Change directory to avoid importing the package from repo root.
 mkdir _testing && cd _testing
-python -m pytest -n "$(nproc --all)" --pyargs tfds-fusion-360-gallery-dataset -k 'not extra'
+python -m pytest -n "$(nproc --all)" --pyargs tfds-fusion-360-gallery-dataset
 cd ..
 
 set +u

@@ -20,6 +20,8 @@ import pathlib
 
 _CURRENT_DIR = pathlib.Path(__file__).parent
 
+print(find_packages())
+
 setup(name="tfds-fusion-360-gallery-dataset",
       version="0.1.0",
       url="https://github.com/d61h6k4/tfds-fusion-360-gallery-dataset",

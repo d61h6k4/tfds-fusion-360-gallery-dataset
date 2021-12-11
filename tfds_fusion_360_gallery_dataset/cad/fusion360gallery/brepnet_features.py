@@ -50,7 +50,7 @@ from occwl.edge_data_extractor import EdgeDataExtractor, EdgeConvexity
 from occwl.edge import Edge
 from occwl.face import Face
 
-from datasets.cad.fusion360gallery.entity_mapper import EntityMapper
+from tfds_fusion_360_gallery_dataset.cad.fusion360gallery.entity_mapper import EntityMapper
 
 
 def load_body(step_filepath: pathlib.Path) -> TopoDS_Shape:

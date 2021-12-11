@@ -17,7 +17,7 @@
 import numpy as np
 import tensorflow_datasets.public_api as tfds
 
-from datasets.cad.fusion360gallery import fusion360gallery
+from tfds_fusion_360_gallery_dataset.cad.fusion360gallery import fusion360gallery
 
 
 class Fusion360GallerySegmentationTest(tfds.testing.DatasetBuilderTestCase):
@@ -61,13 +61,15 @@ class SimpleEdgeConfigTest(tfds.testing.TestCase):
         coedge_to_edge = np.array([0, 0])
 
         g = fusion360gallery.SimpleEdgeConfig(
-                name="test", description="test").create_graph(
-                    face_features, edge_features, coedge_features,
-                    coedge_to_next, coedge_to_mate, coedge_to_face,
-                    coedge_to_edge)
+            name="test",
+            description="test").create_graph(face_features, edge_features,
+                                             coedge_features, coedge_to_next,
+                                             coedge_to_mate, coedge_to_face,
+                                             coedge_to_edge)
 
         self.assertEqual(5, g["n_node"][0])
-        self.assertEqual(9 * 2, g["n_edge"][0], list(zip(g["senders"], g["receivers"])))
+        self.assertEqual(9 * 2, g["n_edge"][0],
+                         list(zip(g["senders"], g["receivers"])))
 
 
 if __name__ == "__main__":

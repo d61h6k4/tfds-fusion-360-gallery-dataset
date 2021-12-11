@@ -25,7 +25,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
-from datasets.cad.fusion360gallery import brepnet_features
+from tfds_fusion_360_gallery_dataset.cad.fusion360gallery import brepnet_features
 
 _DESCRIPTION = """\
 The Fusion 360 Gallery Dataset contains rich 2D and 3D geometry data derived

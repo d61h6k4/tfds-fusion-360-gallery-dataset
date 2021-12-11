@@ -137,8 +137,8 @@ class SimpleEdgeConfig(tfds.core.BuilderConfig):
 
 class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
     """Fusion 360 Gallery Dataset (segmentation)"""
-    VERSION = tfds.core.Version("1.0.0")
-    RELEASE_NOTE = {"1.0.0": "Initial release."}
+    VERSION = tfds.core.Version("2.0.0")
+    RELEASE_NOTE = {"2.0.0": "Initial release."}
     # pytype: disable=wrong-keyword-args
     BUILDER_CONFIGS = [
         # `name` (and optionally `description`) are required for each config
@@ -179,7 +179,7 @@ class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
         output_files = dl_manager.download_and_extract(
             "https://fusion-360-gallery-dataset.s3-us-west-2.amazonaws.com/segmentation/s2.0.0/s2.0.0.zip"
         )
-        output_files = pathlib.Path(output_files)
+        output_files = pathlib.Path(output_files) / "s2.0.0"
 
         split_info = json.loads((output_files / "train_test.json").read_text())
         step_dir = output_files / "breps" / "step"

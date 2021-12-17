@@ -19,13 +19,15 @@ from typing import Sequence
 
 import json
 import pathlib
-import warnings
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
-from tfds_fusion_360_gallery_dataset.cad.fusion360gallery import brepnet_features
+import brep2graph
+import brep2graph.utils
+
+from OCC.Core.TopoDS import TopoDS_Shape
 
 _DESCRIPTION = """\
 The Fusion 360 Gallery Dataset contains rich 2D and 3D geometry data derived
@@ -62,77 +64,9 @@ _URL = "https://github.com/AutodeskAILab/Fusion360GalleryDataset"
 
 class SimpleEdgeConfig(tfds.core.BuilderConfig):
     """Simple Edge configuration."""
-    def create_graph(self, face_features: np.ndarray,
-                     edge_features: np.ndarray, coedge_features: np.ndarray,
-                     coedge_to_next: np.ndarray, coedge_to_mate: np.ndarray,
-                     coedge_to_face: np.ndarray, coedge_to_edge: np.ndarray):
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
         """Create graph according to the `simple edge` configuration."""
-        del coedge_to_next
-
-        faces_num = face_features.shape[0]
-        edges_num = edge_features.shape[0]
-        coedges_num = coedge_features.shape[0]
-
-        face_to_node = np.arange(faces_num)
-        edge_to_node = np.arange(edges_num) + faces_num
-        coedge_to_node = np.arange(coedges_num) + (faces_num + edges_num)
-
-        edges = []
-        # Faces
-        # F
-        for coedge_ix, face_ix in enumerate(coedge_to_face):
-            edges.append((coedge_to_node[coedge_ix], face_to_node[face_ix]))
-        # MF
-        for coedge_from_ix, coedge_to_ix in enumerate(coedge_to_mate):
-            edges.append((coedge_to_node[coedge_from_ix],
-                          face_to_node[coedge_to_face[coedge_to_ix]]))
-        # Edges
-        # E
-        for coedge_ix, edge_ix in enumerate(coedge_to_edge):
-            edges.append((coedge_to_node[coedge_ix], edge_to_node[edge_ix]))
-        # CoEdges
-        # I
-        for coedge_ix in range(coedges_num):
-            edges.append(
-                (coedge_to_node[coedge_ix], coedge_to_node[coedge_ix]))
-        # M
-        for coedge_from_ix, coedge_to_ix in enumerate(coedge_to_mate):
-            edges.append(
-                (coedge_to_node[coedge_from_ix], coedge_to_node[coedge_to_ix]))
-
-        n_node = faces_num + edges_num + coedges_num
-
-        senders = []
-        receivers = []
-        for edge_ix, (f, t) in enumerate(edges):
-            senders.append(f)
-            receivers.append(t)
-            # don't add self-loops more than once
-            if f != t:
-                senders.append(t)
-                receivers.append(f)
-
-        assert len(senders) == len(receivers)
-        n_edge = len(senders)
-
-        nodes = np.concatenate(
-            (np.pad(face_features,
-                    ((0, 0),
-                     (0, edge_features.shape[1] + coedge_features.shape[1]))),
-             np.pad(edge_features,
-                    ((0, 0),
-                     (face_features.shape[1], coedge_features.shape[1]))),
-             np.pad(coedge_features,
-                    ((0, 0),
-                     (face_features.shape[1] + edge_features.shape[1], 0)))))
-
-        return {
-            "n_node": np.array([n_node], dtype=np.int32),
-            "n_edge": np.array([n_edge], dtype=np.int32),
-            "nodes": nodes,
-            "senders": np.array(senders, dtype=np.int32),
-            "receivers": np.array(receivers, dtype=np.int32),
-        }
+        return brep2graph.graph_from_brep(body)
 
 
 class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
@@ -204,38 +138,8 @@ class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
             step_file = step_dir / f"{objid}.stp"
             assert step_file.exists()
 
-            loaded_body = brepnet_features.load_body(step_file)
-            body = brepnet_features.scale_solid_to_unit_box(loaded_body)
-
-            if not brepnet_features.check_manifold(body):
-                warnings.warn("Non-manifold bodies are not supported.")
-                continue
-
-            if not brepnet_features.check_closed(body):
-                warnings.warn("Bodies which are not closed are not supported")
-                continue
-
-            if not brepnet_features.check_unique_coedges(body):
-                warnings.warn(
-                    "Bodies where the same coedge is uses in multiple loops are not supported"
-                )
-                continue
-
-            entity_mapper = brepnet_features.EntityMapper(body)
-
-            face_features = brepnet_features.face_features_from_body(
-                body, entity_mapper)
-            edge_features = brepnet_features.edge_features_from_body(
-                body, entity_mapper)
-            coedge_features = brepnet_features.coedge_features_from_body(
-                body, entity_mapper)
-
-            coedge_to_next, coedge_to_mate, coedge_to_face, coedge_to_edge = brepnet_features.build_incidence_arrays(
-                body, entity_mapper)
-
-            graph = self.builder_config.create_graph(
-                face_features, edge_features, coedge_features, coedge_to_next,
-                coedge_to_mate, coedge_to_face, coedge_to_edge)
+            loaded_body = brep2graph.utils.load_body(step_file)
+            graph = self.builder_config.create_graph(loaded_body)
 
             yield objid, {
                 "face_labels": face_labels,

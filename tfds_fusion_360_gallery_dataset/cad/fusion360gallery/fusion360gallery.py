@@ -66,7 +66,56 @@ class SimpleEdgeConfig(tfds.core.BuilderConfig):
     """Simple Edge configuration."""
     def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
         """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(body)
+        return brep2graph.graph_from_brep(
+            body, brep2graph.configurations.simple_edge)
+
+
+class AssymetricConfig(tfds.core.BuilderConfig):
+    """Assymetric configuration."""
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
+        """Create graph according to the `simple edge` configuration."""
+        return brep2graph.graph_from_brep(body,
+                                          brep2graph.configurations.assymetric)
+
+
+class AssymetricPlusConfig(tfds.core.BuilderConfig):
+    """Assymetric+ configuration."""
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
+        """Create graph according to the `simple edge` configuration."""
+        return brep2graph.graph_from_brep(
+            body, brep2graph.configurations.assymetric_plus)
+
+
+class AssymetricPlusPlusConfig(tfds.core.BuilderConfig):
+    """Assymetric++ configuration."""
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
+        """Create graph according to the `simple edge` configuration."""
+        return brep2graph.graph_from_brep(
+            body, brep2graph.configurations.assymetric_plus_plus)
+
+
+class WingedEdgeConfig(tfds.core.BuilderConfig):
+    """WingedEdge configuration."""
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
+        """Create graph according to the `simple edge` configuration."""
+        return brep2graph.graph_from_brep(
+            body, brep2graph.configurations.winged_edge)
+
+
+class WingedEdgePlusConfig(tfds.core.BuilderConfig):
+    """WingedEdge+ configuration."""
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
+        """Create graph according to the `simple edge` configuration."""
+        return brep2graph.graph_from_brep(
+            body, brep2graph.configurations.winged_edge_plus)
+
+
+class WingedEdgePlusPlusConfig(tfds.core.BuilderConfig):
+    """WingedEdge++ configuration."""
+    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
+        """Create graph according to the `simple edge` configuration."""
+        return brep2graph.graph_from_brep(
+            body, brep2graph.configurations.winged_edge_plus_plus)
 
 
 class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
@@ -77,6 +126,12 @@ class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
     BUILDER_CONFIGS = [
         # `name` (and optionally `description`) are required for each config
         SimpleEdgeConfig(name="simple_edge", description="Simple edge."),
+        AssymetricConfig(name="assymetric", description="Assymetric."),
+        AssymetricPlusConfig(name="assymetric+", description="Assymetric+."),
+        AssymetricPlusPlusConfig(name="assymetric++", description="Assymetric++."),
+        WingedEdgeConfig(name="winged_edge", description="WingedEdge"),
+        WingedEdgePlusConfig(name="winged_edge+", description="WingedEdge+"),
+        WingedEdgePlusPlusConfig(name="winged_edge++", description="WingedEdge++"),
     ]
 
     # pytype: enable=wrong-keyword-args

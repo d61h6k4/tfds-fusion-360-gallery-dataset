@@ -24,7 +24,7 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_datasets.public_api as tfds
 
-import brep2graph
+import brep2graph.brepnet_features
 import brep2graph.utils
 
 from OCC.Core.TopoDS import TopoDS_Shape
@@ -62,107 +62,36 @@ _CITATION = r"""\
 _URL = "https://github.com/AutodeskAILab/Fusion360GalleryDataset"
 
 
-class SimpleEdgeConfig(tfds.core.BuilderConfig):
-    """Simple Edge configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(
-            body, brep2graph.configurations.simple_edge)
-
-
-class AssymetricConfig(tfds.core.BuilderConfig):
-    """Assymetric configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(body,
-                                          brep2graph.configurations.assymetric)
-
-
-class AssymetricPlusConfig(tfds.core.BuilderConfig):
-    """Assymetric+ configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(
-            body, brep2graph.configurations.assymetric_plus)
-
-
-class AssymetricPlusPlusConfig(tfds.core.BuilderConfig):
-    """Assymetric++ configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(
-            body, brep2graph.configurations.assymetric_plus_plus)
-
-
-class WingedEdgeConfig(tfds.core.BuilderConfig):
-    """WingedEdge configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(
-            body, brep2graph.configurations.winged_edge)
-
-
-class WingedEdgePlusConfig(tfds.core.BuilderConfig):
-    """WingedEdge+ configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(
-            body, brep2graph.configurations.winged_edge_plus)
-
-
-class WingedEdgePlusPlusConfig(tfds.core.BuilderConfig):
-    """WingedEdge++ configuration."""
-    def create_graph(self, body: TopoDS_Shape) -> dict[str, np.ndarray]:
-        """Create graph according to the `simple edge` configuration."""
-        return brep2graph.graph_from_brep(
-            body, brep2graph.configurations.winged_edge_plus_plus)
-
-
 class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
     """Fusion 360 Gallery Dataset (segmentation)"""
     VERSION = tfds.core.Version("2.0.0")
     RELEASE_NOTE = {"2.0.0": "Initial release."}
-    # pytype: disable=wrong-keyword-args
-    BUILDER_CONFIGS = [
-        # `name` (and optionally `description`) are required for each config
-        SimpleEdgeConfig(name="simple_edge", description="Simple edge."),
-        AssymetricConfig(name="assymetric", description="Assymetric."),
-        AssymetricPlusConfig(name="assymetric+", description="Assymetric+."),
-        AssymetricPlusPlusConfig(name="assymetric++", description="Assymetric++."),
-        WingedEdgeConfig(name="winged_edge", description="WingedEdge"),
-        WingedEdgePlusConfig(name="winged_edge+", description="WingedEdge+"),
-        WingedEdgePlusPlusConfig(name="winged_edge++", description="WingedEdge++"),
-    ]
-
-    # pytype: enable=wrong-keyword-args
 
     def _info(self):
         """Define the dataset info."""
-        return tfds.core.DatasetInfo(builder=self,
-                                     description=_DESCRIPTION,
-                                     features=tfds.features.FeaturesDict({
-                                         "face_labels":
-                                         tfds.features.Tensor(shape=(None, ),
-                                                              dtype=tf.uint32),
-                                         "n_node":
-                                         tfds.features.Tensor(shape=(1, ),
-                                                              dtype=tf.int32),
-                                         "n_edge":
-                                         tfds.features.Tensor(shape=(1, ),
-                                                              dtype=tf.int32),
-                                         "nodes":
-                                         tfds.features.Tensor(
-                                             shape=(None, 7 + 14 + 1),
-                                             dtype=tf.float32),
-                                         "senders":
-                                         tfds.features.Tensor(shape=(None, ),
-                                                              dtype=tf.int32),
-                                         "receivers":
-                                         tfds.features.Tensor(shape=(None, ),
-                                                              dtype=tf.int32),
-                                     }),
-                                     homepage=_URL,
-                                     citation=_CITATION)
+        return tfds.core.DatasetInfo(
+            builder=self,
+            description=_DESCRIPTION,
+            features=tfds.features.FeaturesDict({
+                "face_labels":
+                tfds.features.Tensor(shape=(None, ), dtype=tf.uint32),
+                "face_features":
+                tfds.features.Tensor(shape=(None, 7), dtype=tf.float32),
+                "edge_features":
+                tfds.features.Tensor(shape=(None, 14), dtype=tf.float32),
+                "coedge_features":
+                tfds.features.Tensor(shape=(None, 1), dtype=tf.float32),
+                "coedge_to_next":
+                tfds.features.Tensor(shape=(None, ), dtype=tf.uint32),
+                "coedge_to_mate":
+                tfds.features.Tensor(shape=(None, ), dtype=tf.uint32),
+                "coedge_to_face":
+                tfds.features.Tensor(shape=(None, ), dtype=tf.uint32),
+                "coedge_to_edge":
+                tfds.features.Tensor(shape=(None, ), dtype=tf.uint32),
+            }),
+            homepage=_URL,
+            citation=_CITATION)
 
     def _split_generators(self, dl_manager: tfds.download.DownloadManager):
         output_files = dl_manager.download_and_extract(
@@ -194,13 +123,39 @@ class Fusion360GallerySegmentation(tfds.core.GeneratorBasedBuilder):
             assert step_file.exists()
 
             loaded_body = brep2graph.utils.load_body(step_file)
-            graph = self.builder_config.create_graph(loaded_body)
+            body = brep2graph.utils.scale_solid_to_unit_box(loaded_body)
+
+            if not brep2graph.utils.check_manifold(body):
+                raise RuntimeError("Non-manifold bodies are not supported.")
+
+            if not brep2graph.utils.check_closed(body):
+                raise RuntimeError(
+                    "Bodies which are not closed are not supported")
+
+            if not brep2graph.utils.check_unique_coedges(body):
+                raise RuntimeError(
+                    "Bodies where the same coedge is uses in multiple loops are not supported"
+                )
+
+            entity_mapper = brep2graph.brepnet_features.EntityMapper(body)
+
+            face_features = brep2graph.brepnet_features.face_features_from_body(
+                body, entity_mapper)
+            edge_features = brep2graph.brepnet_features.edge_features_from_body(
+                body, entity_mapper)
+            coedge_features = brep2graph.brepnet_features.coedge_features_from_body(
+                body, entity_mapper)
+
+            coedge_to_next, coedge_to_mate, coedge_to_face, coedge_to_edge = brep2graph.brepnet_features.build_incidence_arrays(
+                body, entity_mapper)
 
             yield objid, {
                 "face_labels": face_labels,
-                "n_node": graph["n_node"],
-                "n_edge": graph["n_edge"],
-                "nodes": graph["nodes"],
-                "senders": graph["senders"],
-                "receivers": graph["receivers"],
+                "face_features": face_features,
+                "edge_features": edge_features,
+                "coedge_features": coedge_features,
+                "coedge_to_next": coedge_to_next,
+                "coedge_to_mate": coedge_to_mate,
+                "coedge_to_face": coedge_to_face,
+                "coedge_to_edge": coedge_to_edge,
             }

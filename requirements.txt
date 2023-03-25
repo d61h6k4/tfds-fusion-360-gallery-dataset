@@ -1,5 +1,5 @@
 numpy==1.22.0
 occwl @ git+https://github.com/AutodeskAILab/occwl.git@1a7009f79d242821e1ebc8e645ab49a1b4b88810
-tensorflow==2.8.1
+tensorflow==2.11.1
 tensorflow-datasets==4.4.0
 deprecate==1.0.5
